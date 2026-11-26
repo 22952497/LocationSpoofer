@@ -255,6 +255,28 @@ class SettingsRepository(private val settingsManager: SettingsManager) {
             settingsManager.keepLastMapPosition = value
         }
 
+    /**
+     * 路线模拟：记住上一次选择的运行模式 / 巡航速度档位 / 自定义速度。
+     * 只做持久化，不影响任何算法；默认值与旧硬编码默认值保持一致，升级后行为不变。
+     */
+    var routeRunMode: String
+        get() = settingsManager.routeRunMode
+        set(value) {
+            settingsManager.routeRunMode = value
+        }
+
+    var routeSimMode: String
+        get() = settingsManager.routeSimMode
+        set(value) {
+            settingsManager.routeSimMode = value
+        }
+
+    var routeCustomSpeedMs: Float
+        get() = settingsManager.routeCustomSpeedMs
+        set(value) {
+            settingsManager.routeCustomSpeedMs = value
+        }
+
     /** 最后一次选定的地图位置（GCJ-02），未保存过时返回 null */
     fun getLastMapPosition(): Pair<String, String>? {
         val lat = settingsManager.lastMapLat

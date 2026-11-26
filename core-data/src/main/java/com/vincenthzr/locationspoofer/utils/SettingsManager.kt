@@ -196,6 +196,24 @@ class SettingsManager(context: Context) {
         get() = prefs.getBoolean("use_gait_template", false)
         set(value) = prefs.edit().putBoolean("use_gait_template", value).apply()
 
+    /**
+     * 路线模拟：上一次选择的运行模式（LOOP / MANUAL）。
+     * 目的是让下次打开「路线模拟设置」时停在用户上次的选项上，不用每次重新点一遍。
+     */
+    var routeRunMode: String
+        get() = prefs.getString("route_run_mode", "LOOP") ?: "LOOP"
+        set(value) = prefs.edit().putString("route_run_mode", value).apply()
+
+    /** 路线模拟：上一次选择的巡航速度档位（SimMode 名称，默认 WALKING） */
+    var routeSimMode: String
+        get() = prefs.getString("route_sim_mode", "WALKING") ?: "WALKING"
+        set(value) = prefs.edit().putString("route_sim_mode", value).apply()
+
+    /** 路线模拟：自定义速度 (m/s)，默认 3.0 */
+    var routeCustomSpeedMs: Float
+        get() = prefs.getFloat("route_custom_speed_ms", 3.0f)
+        set(value) = prefs.edit().putFloat("route_custom_speed_ms", value.coerceIn(0.1f, 100.0f)).apply()
+
     /** 打开 App 时地图停留在上次选定的位置，而不是自动跳到真实位置 */
     var keepLastMapPosition: Boolean
         get() = prefs.getBoolean("keep_last_map_position", true)

@@ -10,6 +10,8 @@ import com.vincenthzr.locationspoofer.data.model.AppState
 import com.vincenthzr.locationspoofer.data.model.AppMapType
 import com.vincenthzr.locationspoofer.data.model.MapEngine
 import com.vincenthzr.locationspoofer.data.model.RootSolution
+import com.vincenthzr.locationspoofer.data.model.RouteRunMode
+import com.vincenthzr.locationspoofer.data.model.SimMode
 import com.vincenthzr.locationspoofer.vendor.VendorScheme
 import com.vincenthzr.locationspoofer.utils.GaitTemplate
 import com.vincenthzr.locationspoofer.data.motion.MotionController
@@ -86,6 +88,19 @@ class MainViewModel(
             firstKmBiasSec = settingsRepository.firstKmBiasSec,
             fatigueStartKm = settingsRepository.fatigueStartKm,
             autoCloseTrajectoryLoop = settingsRepository.autoCloseTrajectoryLoop,
+            // 路线模拟：恢复上一次选择的速度档位与自定义速度（issue #4），
+            // 值来源是持久化字符串，解析失败时回落到原来的硬编码默认值。
+            routeRunMode = try {
+                RouteRunMode.valueOf(settingsRepository.routeRunMode)
+            } catch (e: Exception) {
+                RouteRunMode.LOOP
+            },
+            routeSimMode = try {
+                SimMode.valueOf(settingsRepository.routeSimMode)
+            } catch (e: Exception) {
+                SimMode.WALKING
+            },
+            customSpeedMs = settingsRepository.routeCustomSpeedMs.toDouble(),
             gaitTemplateCadence = GaitTemplate.decode(settingsRepository.gaitTemplate)?.cadenceSpm,
             gaitTemplateStrides = GaitTemplate.decode(settingsRepository.gaitTemplate)?.strideCount ?: 0,
             useGaitTemplate = settingsRepository.useGaitTemplate,

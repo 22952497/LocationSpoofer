@@ -66,9 +66,10 @@ internal fun MainViewModel.restartSelectingPoints() {
     }
 }
 
-/** 设置路线运行模式 */
+/** 设置路线运行模式（同时写盘，下次打开沿用，见 issue #4） */
 
 internal fun MainViewModel.setRouteRunMode(mode: RouteRunMode) {
+    settingsRepository.routeRunMode = mode.name
     _uiState.update { it.copy(routeRunMode = mode) }
 }
 
@@ -90,16 +91,20 @@ internal fun MainViewModel.deleteSavedRoute(route: com.vincenthzr.locationspoofe
     }
 }
 
-/** 设置循环模式速度 */
+/** 设置循环模式速度（同时写盘，下次打开沿用，见 issue #4） */
 
 internal fun MainViewModel.setRouteSimMode(mode: SimMode) {
+    settingsRepository.routeSimMode = mode.name
     _uiState.update { it.copy(routeSimMode = mode) }
 }
 
-/** 设置自定义速度 (m/s) */
+/** 设置自定义速度 (m/s)（同时写盘，下次打开沿用，见 issue #4） */
 
 internal fun MainViewModel.setCustomSpeedMs(speed: Double) {
-    _uiState.update { it.copy(customSpeedMs = speed.coerceIn(0.1, 100.0)) }
+    val value = speed.coerceIn(0.1, 100.0)
+    // 允许 0.1 级别的小数，Float 精度足够，只在写盘时转换
+    settingsRepository.routeCustomSpeedMs = value.toFloat()
+    _uiState.update { it.copy(customSpeedMs = value) }
 }
 
 /** 获取实际生效的速度 (m/s) */
@@ -377,13 +382,13 @@ private fun MainViewModel.startSimulationWithPoints(pointsToRun: List<RoutePoint
 }
 
 /** 停止路线模拟，重置所有状态 */
-
 internal fun MainViewModel.cancelRoutePlanning() {
+    // 注意：不重置 routeRunMode / routeSimMode / customSpeedMs。
+    // 这三项是用户的偏好（issue #4），停止模拟后仍应保留，下次开始沿用。
     _uiState.update {
         it.copy(
             routePlanStage = RoutePlanStage.IDLE,
-            routePoints = emptyList(),
-            routeRunMode = RouteRunMode.LOOP
+            routePoints = emptyList()
         )
     }
 }
@@ -396,12 +401,12 @@ internal fun MainViewModel.stopRoutePlanning() {
     environmentUpdateJob?.cancel()
     viewModelScope.launch {
         locationRepository.stopSpoofing(context)
+        // 同上：运行模式 / 速度档位 / 自定义速度都属于持久化偏好，这里不重置。
         _uiState.update {
             it.copy(
                 isSpoofingActive = false,
                 routePlanStage = RoutePlanStage.IDLE,
-                routePoints = emptyList(),
-                routeRunMode = RouteRunMode.LOOP
+                routePoints = emptyList()
             )
         }
     }
@@ -584,6 +589,8 @@ internal fun MainViewModel.observeMotionController() {
             }
             val simMode = SimMode.entries.firstOrNull { it.name == st.preset.name }
             if (simMode != null && simMode != _uiState.value.routeSimMode) {
+                // 悬浮窗切档位等同于用户主动选速度，同样写盘，保证下次打开沿用（issue #4）
+                settingsRepository.routeSimMode = simMode.name
                 _uiState.update { it.copy(routeSimMode = simMode) }
             }
         }
